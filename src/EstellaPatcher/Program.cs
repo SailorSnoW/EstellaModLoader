@@ -23,6 +23,16 @@ internal static class Program
 
         try
         {
+            // No arguments = show menu
+            if (args.Length == 0)
+            {
+                args = ShowMenu();
+                if (args.Contains("--exit"))
+                {
+                    return 0;
+                }
+            }
+
             return Run(args);
         }
         catch (Exception ex)
@@ -32,11 +42,83 @@ internal static class Program
         }
     }
 
+    private static string[] ShowMenu()
+    {
+        Console.WriteLine();
+
+        // Show current game status if we can find it
+        string? gamePath = FindGamePath([]);
+        if (gamePath is not null)
+        {
+            var dllPath = Path.Combine(gamePath, GameDllName);
+            var backupPath = dllPath + BackupSuffix;
+
+            bool isPatched = IsGamePatched(dllPath);
+            bool hasBackup = File.Exists(backupPath);
+
+            Console.WriteLine($"Game found: {gamePath}");
+            Console.WriteLine($"Status: {(isPatched ? "PATCHED" : "NOT PATCHED")}");
+            if (hasBackup)
+            {
+                Console.WriteLine("Backup: Available");
+            }
+        }
+        else
+        {
+            Console.WriteLine("Game: Not found (will search on action)");
+        }
+
+        Console.WriteLine();
+        Console.WriteLine("What would you like to do?");
+        Console.WriteLine();
+        Console.WriteLine("  [1] Patch game (enable mods)");
+        Console.WriteLine("  [2] Unpatch game (restore original)");
+        Console.WriteLine("  [3] Exit");
+        Console.WriteLine();
+        Console.Write("Choice: ");
+
+        var key = Console.ReadKey(true);
+        Console.WriteLine(key.KeyChar);
+        Console.WriteLine();
+
+        return key.KeyChar switch
+        {
+            '1' => [],           // Patch (default action)
+            '2' => ["--unpatch"],
+            _ => ["--exit"]      // Signal to exit
+        };
+    }
+
+    private static bool IsGamePatched(string dllPath)
+    {
+        try
+        {
+            using var assembly = AssemblyDefinition.ReadAssembly(dllPath);
+            var sceneManager = assembly.MainModule.Types.FirstOrDefault(t => t.Name == "SceneManager");
+            var cctor = sceneManager?.Methods.FirstOrDefault(m => m.Name == ".cctor");
+
+            if (cctor?.Body is null) return false;
+
+            return cctor.Body.Instructions.Any(i =>
+                i.OpCode == OpCodes.Ldstr &&
+                i.Operand?.ToString() == "Init");
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
     private static int Run(string[] args)
     {
         if (args.Contains("--help") || args.Contains("-h"))
         {
             PrintHelp();
+            return 0;
+        }
+
+        if (args.Contains("--exit"))
+        {
             return 0;
         }
 
@@ -89,12 +171,14 @@ internal static class Program
         Console.WriteLine("  EstellaPatcher                    Auto-detect and patch");
         Console.WriteLine("  EstellaPatcher --unpatch          Restore original game");
         Console.WriteLine("  EstellaPatcher \"C:\\path\\to\\...\"   Patch specific path");
+        Console.WriteLine();
+        Console.WriteLine("Tip: Double-click the exe for interactive mode.");
     }
 
     private static int Unpatch(string dllPath, string backupPath)
     {
-        Console.WriteLine();
         Console.WriteLine("=== UNPATCH MODE ===");
+        Console.WriteLine();
 
         if (!File.Exists(backupPath))
         {
@@ -107,6 +191,7 @@ internal static class Program
         {
             Console.WriteLine($"Restoring original {GameDllName} from backup...");
             File.Copy(backupPath, dllPath, overwrite: true);
+            Console.WriteLine();
             Console.WriteLine("Game restored successfully!");
             return 0;
         }
@@ -120,6 +205,9 @@ internal static class Program
 
     private static int Patch(string gamePath, string dllPath, string backupPath)
     {
+        Console.WriteLine("=== PATCH MODE ===");
+        Console.WriteLine();
+
         var gameRoot = Path.GetDirectoryName(gamePath)
             ?? throw new InvalidOperationException("Could not determine game root directory.");
 
@@ -127,10 +215,18 @@ internal static class Program
         var modloaderPath = Path.Combine(modsFolder, ModLoaderDllName);
         var tempPath = dllPath + ".temp";
 
+        // Create mods folder if it doesn't exist
+        if (!Directory.Exists(modsFolder))
+        {
+            Console.WriteLine($"Creating mods folder: {modsFolder}");
+            Directory.CreateDirectory(modsFolder);
+        }
+
         if (!File.Exists(modloaderPath))
         {
             Console.WriteLine($"WARNING: {ModLoaderDllName} not found.");
             Console.WriteLine($"Make sure to copy it to: {modsFolder}");
+            Console.WriteLine();
         }
 
         // Create or restore from backup
@@ -176,6 +272,7 @@ internal static class Program
 
             if (patchCount == 0)
             {
+                Console.WriteLine();
                 Console.WriteLine("No patches were applied. Game may already be patched.");
                 return 0;
             }
@@ -198,7 +295,6 @@ internal static class Program
         catch (IOException ex)
         {
             Console.WriteLine($"ERROR: Failed to replace game DLL - {ex.Message}");
-            // Clean up temp file
             if (File.Exists(tempPath))
             {
                 File.Delete(tempPath);
