@@ -39,7 +39,7 @@ jobs:
 
       - name: Push to GitHub Packages
         if: github.ref == 'refs/heads/master'
-        run: dotnet nuget push nupkg/*.nupkg --api-key ${{ secrets.GITHUB_TOKEN }} --source "https://nuget.pkg.github.com/SailorSnoW/index.json" --skip-duplicate
+        run: Get-ChildItem nupkg/*.nupkg | ForEach-Object { dotnet nuget push $_.FullName --api-key ${{ secrets.GITHUB_TOKEN }} --source "https://nuget.pkg.github.com/SailorSnoW/index.json" --skip-duplicate }
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
