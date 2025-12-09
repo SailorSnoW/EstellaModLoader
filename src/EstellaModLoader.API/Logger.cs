@@ -1,5 +1,8 @@
 namespace EstellaModLoader;
 
+/// <summary>
+/// Log levels for the logger.
+/// </summary>
 public enum LogLevel
 {
     Debug = 0,
@@ -8,6 +11,9 @@ public enum LogLevel
     Error = 3
 }
 
+/// <summary>
+/// Logger for mods to output messages.
+/// </summary>
 public static class Logger
 {
     private static readonly object _lock = new();
@@ -15,9 +21,15 @@ public static class Logger
     private static Action<string>? _gdPrint;
     private static string? _logDirectory;
 
+    /// <summary>
+    /// Minimum log level to output. Default is Info.
+    /// </summary>
     public static LogLevel MinLevel { get; set; } = LogLevel.Info;
 
-    internal static void Initialize(string logDirectory, Action<string>? gdPrint)
+    /// <summary>
+    /// Initialize the logger. Called internally by the ModLoader.
+    /// </summary>
+    public static void Initialize(string logDirectory, Action<string>? gdPrint)
     {
         _logDirectory = logDirectory;
         _gdPrint = gdPrint;
@@ -49,6 +61,9 @@ public static class Logger
         Info("Logger", $"EstellaModLoader initialized - Log level: {MinLevel}");
     }
 
+    /// <summary>
+    /// Log a message at the specified level.
+    /// </summary>
     public static void Log(LogLevel level, string source, string message)
     {
         if (level < MinLevel) return;
@@ -82,18 +97,39 @@ public static class Logger
         catch { }
     }
 
+    /// <summary>
+    /// Log a debug message.
+    /// </summary>
     public static void Debug(string source, string message) => Log(LogLevel.Debug, source, message);
+
+    /// <summary>
+    /// Log an info message.
+    /// </summary>
     public static void Info(string source, string message) => Log(LogLevel.Info, source, message);
+
+    /// <summary>
+    /// Log a warning message.
+    /// </summary>
     public static void Warn(string source, string message) => Log(LogLevel.Warn, source, message);
+
+    /// <summary>
+    /// Log an error message.
+    /// </summary>
     public static void Error(string source, string message) => Log(LogLevel.Error, source, message);
 
+    /// <summary>
+    /// Log an error message with exception details.
+    /// </summary>
     public static void Error(string source, string message, Exception ex)
     {
         Log(LogLevel.Error, source, $"{message}: {ex.Message}");
         Log(LogLevel.Debug, source, ex.StackTrace ?? "No stack trace");
     }
 
-    internal static void WriteCrashDump(string context, Exception ex)
+    /// <summary>
+    /// Write a crash dump file. Called internally by the ModLoader.
+    /// </summary>
+    public static void WriteCrashDump(string context, Exception ex)
     {
         if (_logDirectory == null) return;
 
@@ -122,7 +158,10 @@ public static class Logger
         catch { }
     }
 
-    internal static void Shutdown()
+    /// <summary>
+    /// Shutdown the logger. Called internally by the ModLoader.
+    /// </summary>
+    public static void Shutdown()
     {
         lock (_lock)
         {

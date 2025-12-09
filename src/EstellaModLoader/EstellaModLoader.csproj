@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
@@ -7,15 +7,19 @@
     <AssemblyName>EstellaModLoader</AssemblyName>
   </PropertyGroup>
 
- <ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\EstellaModLoader.API\EstellaModLoader.API.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Reference Include="GodotSharp">
-    <HintPath>C:\Program Files (x86)\Steam\steamapps\common\Estella Demo\data_ESTELLA_windows_x86_64\GodotSharp.dll</HintPath>
-    <Private>false</Private>
-  </Reference>
-  <Reference Include="Estella">
-    <HintPath>C:\Program Files (x86)\Steam\steamapps\common\Estella Demo\data_ESTELLA_windows_x86_64\Estella.dll</HintPath>
-    <Private>false</Private>
-  </Reference>
-  </ItemGroup> 
+      <HintPath>C:\Program Files (x86)\Steam\steamapps\common\Estella Demo\data_ESTELLA_windows_x86_64\GodotSharp.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="Estella">
+      <HintPath>C:\Program Files (x86)\Steam\steamapps\common\Estella Demo\data_ESTELLA_windows_x86_64\Estella.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+  </ItemGroup>
 
 </Project>
