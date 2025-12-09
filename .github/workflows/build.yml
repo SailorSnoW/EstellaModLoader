@@ -6,6 +6,9 @@ on:
   pull_request:
     branches: [master, develop]
 
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: windows-latest
@@ -37,16 +40,27 @@ jobs:
           path: publish/
           retention-days: 30
 
+      - name: Delete existing release
+        if: github.ref == 'refs/heads/master'
+        run: gh release delete v0.1.0-dev --yes || true
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Delete existing tag
+        if: github.ref == 'refs/heads/master'
+        run: git push origin :refs/tags/v0.1.0-dev || true
+
       - name: Create Release (master only)
         if: github.ref == 'refs/heads/master'
         uses: softprops/action-gh-release@v1
         with:
-          tag_name: dev-${{ github.sha }}
-          name: Development Build
+          tag_name: v0.1.0-dev
+          name: v0.1.0-dev
           body: |
-            Automated development build from `${{ github.ref_name }}` branch.
+            Development build - automatically updated on each push to master.
 
-            Commit: ${{ github.sha }}
+            **Commit**: `${{ github.sha }}`
+            **Date**: ${{ github.event.head_commit.timestamp }}
 
             > ⚠️ This is an unstable development build.
           prerelease: true
