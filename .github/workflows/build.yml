@@ -1,0 +1,57 @@
+name: Build
+
+on:
+  push:
+    branches: [master, develop]
+  pull_request:
+    branches: [master, develop]
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Restore dependencies
+        run: dotnet restore
+
+      - name: Build
+        run: dotnet build -c Release --no-restore
+
+      - name: Publish Patcher
+        run: dotnet publish src/EstellaPatcher -c Release -r win-x64 --self-contained false -o publish/
+
+      - name: Copy ModLoader
+        run: copy src\EstellaModLoader\bin\Release\net8.0\EstellaModLoader.dll publish\
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: EstellaMod-${{ github.ref_name }}-${{ github.sha }}
+          path: publish/
+          retention-days: 30
+
+      - name: Create Release (master only)
+        if: github.ref == 'refs/heads/master'
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: dev-${{ github.sha }}
+          name: Development Build
+          body: |
+            Automated development build from `${{ github.ref_name }}` branch.
+
+            Commit: ${{ github.sha }}
+
+            > ⚠️ This is an unstable development build.
+          prerelease: true
+          files: |
+            publish/EstellaPatcher.exe
+            publish/EstellaModLoader.dll
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
