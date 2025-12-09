@@ -1,0 +1,27 @@
+# Build outputs
+bin/
+obj/
+
+# IDE
+.vs/
+.vscode/
+*.user
+*.suo
+
+# Rider
+.idea/
+
+# Build artifacts
+*.dll
+*.pdb
+*.exe
+
+# Config (user-specific)
+config.txt
+
+# OS
+.DS_Store
+Thumbs.db
+
+.claude/
+CLAUDE.md
