@@ -33,13 +33,23 @@ internal static class Program
                 }
             }
 
-            return Run(args);
+            var result = Run(args);
+            WaitForKey();
+            return result;
         }
         catch (Exception ex)
         {
             Console.WriteLine($"FATAL ERROR: {ex.Message}");
+            WaitForKey();
             return 1;
         }
+    }
+
+    private static void WaitForKey()
+    {
+        Console.WriteLine();
+        Console.WriteLine("Press any key to exit...");
+        Console.ReadKey(true);
     }
 
     private static string[] ShowMenu()
@@ -172,7 +182,6 @@ internal static class Program
         Console.WriteLine("  EstellaPatcher --unpatch          Restore original game");
         Console.WriteLine("  EstellaPatcher \"C:\\path\\to\\...\"   Patch specific path");
         Console.WriteLine();
-        Console.WriteLine("Tip: Double-click the exe for interactive mode.");
     }
 
     private static int Unpatch(string dllPath, string backupPath)
