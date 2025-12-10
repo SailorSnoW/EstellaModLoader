@@ -5,6 +5,13 @@ using Mono.Cecil.Cil;
 
 namespace EstellaPatcher;
 
+internal enum PassArgs
+{
+    None,
+    This,
+    ThisAndFirstArg
+}
+
 internal static class Program
 {
     private const string Version = "1.0.0";
@@ -276,9 +283,12 @@ internal static class Program
             var module = assembly.MainModule;
             int patchCount = 0;
 
-            patchCount += PatchMethod(module, "SceneManager", ".cctor", "Init", passThis: false, modloaderPath);
-            patchCount += PatchMethod(module, "MainMenu", "_Ready", "OnMainMenuReady", passThis: true, modloaderPath);
-            patchCount += PatchMethod(module, "Player", "_Ready", "OnPlayerReady", passThis: true, modloaderPath);
+            patchCount += PatchMethod(module, "SceneManager", ".cctor", "Init", PassArgs.None, modloaderPath);
+            patchCount += PatchMethod(module, "MainMenu", "_Ready", "OnMainMenuReady", PassArgs.This, modloaderPath);
+            patchCount += PatchMethod(module, "Player", "_Ready", "OnPlayerReady", PassArgs.This, modloaderPath);
+            patchCount += PatchMethod(module, "InterfaceMenu", "Open", "OnInterfaceMenuOpen", PassArgs.ThisAndFirstArg, modloaderPath);
+            patchCount += PatchMethod(module, "Session", "SetSession", "OnSessionStart", PassArgs.This, modloaderPath);
+            patchCount += PatchMethod(module, "StatsService", "Refresh", "OnStatsUpdated", PassArgs.This, modloaderPath);
 
             if (patchCount == 0)
             {
@@ -323,7 +333,7 @@ internal static class Program
         string typeName,
         string methodName,
         string loaderMethod,
-        bool passThis,
+        PassArgs passArgs,
         string modloaderPath)
     {
         Console.WriteLine($"Patching {typeName}.{methodName} -> {loaderMethod}()...");
@@ -349,7 +359,7 @@ internal static class Program
             return 0;
         }
 
-        InjectModLoaderCall(module, method, loaderMethod, passThis, modloaderPath);
+        InjectModLoaderCall(module, method, loaderMethod, passArgs, modloaderPath);
         Console.WriteLine("  Done.");
         return 1;
     }
@@ -358,7 +368,7 @@ internal static class Program
         ModuleDefinition module,
         MethodDefinition method,
         string loaderMethod,
-        bool passThis,
+        PassArgs passArgs,
         string modloaderPath)
     {
         var il = method.Body.GetILProcessor();
@@ -383,19 +393,37 @@ internal static class Program
             il.Create(OpCodes.Ldnull)
         };
 
-        if (passThis)
+        switch (passArgs)
         {
-            // Create object[] { this }
-            injectedCode.Add(il.Create(OpCodes.Ldc_I4_1));
-            injectedCode.Add(il.Create(OpCodes.Newarr, module.TypeSystem.Object));
-            injectedCode.Add(il.Create(OpCodes.Dup));
-            injectedCode.Add(il.Create(OpCodes.Ldc_I4_0));
-            injectedCode.Add(il.Create(OpCodes.Ldarg_0));
-            injectedCode.Add(il.Create(OpCodes.Stelem_Ref));
-        }
-        else
-        {
-            injectedCode.Add(il.Create(OpCodes.Ldnull));
+            case PassArgs.This:
+                // Create object[] { this }
+                injectedCode.Add(il.Create(OpCodes.Ldc_I4_1));
+                injectedCode.Add(il.Create(OpCodes.Newarr, module.TypeSystem.Object));
+                injectedCode.Add(il.Create(OpCodes.Dup));
+                injectedCode.Add(il.Create(OpCodes.Ldc_I4_0));
+                injectedCode.Add(il.Create(OpCodes.Ldarg_0));
+                injectedCode.Add(il.Create(OpCodes.Stelem_Ref));
+                break;
+
+            case PassArgs.ThisAndFirstArg:
+                // Create object[] { this, arg1 }
+                injectedCode.Add(il.Create(OpCodes.Ldc_I4_2));
+                injectedCode.Add(il.Create(OpCodes.Newarr, module.TypeSystem.Object));
+                injectedCode.Add(il.Create(OpCodes.Dup));
+                injectedCode.Add(il.Create(OpCodes.Ldc_I4_0));
+                injectedCode.Add(il.Create(OpCodes.Ldarg_0));
+                injectedCode.Add(il.Create(OpCodes.Stelem_Ref));
+                injectedCode.Add(il.Create(OpCodes.Dup));
+                injectedCode.Add(il.Create(OpCodes.Ldc_I4_1));
+                injectedCode.Add(il.Create(OpCodes.Ldarg_1));
+                injectedCode.Add(il.Create(OpCodes.Box, module.TypeSystem.Int32));
+                injectedCode.Add(il.Create(OpCodes.Stelem_Ref));
+                break;
+
+            case PassArgs.None:
+            default:
+                injectedCode.Add(il.Create(OpCodes.Ldnull));
+                break;
         }
 
         injectedCode.Add(il.Create(OpCodes.Callvirt, invoke));
