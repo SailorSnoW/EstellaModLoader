@@ -32,18 +32,53 @@ EstellaPatcher.exe --unpatch
 
 ### 2. Install Mods
 
-Place `EstellaModLoader.dll` and your mods in the `mods/` folder:
+Place `EstellaModLoader.dll` in the `mods/` folder and mods in subfolders:
 
 ```
 Estella Demo/
 ├── mods/
-│   ├── EstellaModLoader.dll   ← Required
-│   └── YourMod.dll            ← Mods go here
+│   ├── EstellaModLoader.dll       ← Required
+│   └── MyMod/                     ← Mod folder
+│       ├── MyMod.dll              ← Main mod DLL
+│       └── SomeDependency.dll     ← Optional dependencies
 └── data_ESTELLA_windows_x86_64/
-    └── ESTELLA.dll            ← Patched by EstellaPatcher
+    └── ESTELLA.dll                ← Patched by EstellaPatcher
 ```
 
+Legacy flat structure (`mods/*.dll`) is still supported for backwards compatibility.
+
 ## Creating Mods
+
+### Using ModBase (Recommended)
+
+```csharp
+using EstellaModLoader;
+
+public class MyMod : ModBase
+{
+    public override string Name => "MyMod";
+    public override string Version => "1.0.0";
+
+    public override void OnLoad()
+        => Logger.Info(Name, "Loaded!");
+
+    public override void OnMainMenu(object mainMenu)
+    {
+        // Access Godot nodes via dynamic
+        dynamic menu = mainMenu;
+        Logger.Info(Name, "Main menu ready!");
+    }
+
+    public override void OnSessionStart(object session)
+    {
+        // Called when a song session starts
+        dynamic sess = session;
+        Logger.Info(Name, $"Playing: {sess.Track.Title}");
+    }
+}
+```
+
+### Using IMod Interface
 
 ```csharp
 using EstellaModLoader;
@@ -53,12 +88,16 @@ public class MyMod : IMod
     public string Name => "MyMod";
     public string Version => "1.0.0";
 
-    public void OnLoad()
-        => Logger.Info(Name, "Loaded!");
-
-    public void OnMainMenu(object ctx) { }
-
+    public void OnLoad() { }
+    public void OnMainMenu(object mainMenu) { }
     public void OnPlayer(object player) { }
+    public void OnInterfaceMenuChanged(object interfaceMenu, int screenIndex) { }
+    public void OnSongSelection(object songSelection) { }
+    public void OnResult(object result) { }
+    public void OnSettings(object settings) { }
+    public void OnChapters(object chapters) { }
+    public void OnSessionStart(object session) { }
+    public void OnStatsUpdated(object statsService) { }
 }
 ```
 
@@ -73,7 +112,6 @@ dotnet build -c Release
 ## Current Limitations
 
 - Windows only (Steam auto-detection)
-- Limited hook points (MainMenu, Player)
 - No hot-reload
 - No mod dependencies
 

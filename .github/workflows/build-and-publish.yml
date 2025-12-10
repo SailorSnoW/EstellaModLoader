@@ -8,7 +8,6 @@ on:
 
 permissions:
   contents: write
-  packages: write
 
 jobs:
   build:
@@ -33,13 +32,6 @@ jobs:
 
       - name: Copy ModLoader
         run: copy src\EstellaModLoader\bin\Release\net8.0\EstellaModLoader.dll publish\
-
-      - name: Pack API NuGet
-        run: dotnet pack src/EstellaModLoader.API -c Release -o nupkg/
-
-      - name: Push to GitHub Packages
-        if: github.ref == 'refs/heads/master'
-        run: Get-ChildItem nupkg/*.nupkg | ForEach-Object { dotnet nuget push $_.FullName --api-key ${{ secrets.GITHUB_TOKEN }} --source "https://nuget.pkg.github.com/SailorSnoW/index.json" --skip-duplicate }
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
