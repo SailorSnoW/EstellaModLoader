@@ -1,4 +1,4 @@
-namespace EstellaModLoader;
+namespace EstellaModLoader.API;
 
 /// <summary>
 /// Interface that all mods must implement.

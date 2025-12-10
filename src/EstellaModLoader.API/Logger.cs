@@ -1,4 +1,4 @@
-namespace EstellaModLoader;
+namespace EstellaModLoader.API;
 
 /// <summary>
 /// Log levels for the logger.
