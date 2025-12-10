@@ -1,6 +1,5 @@
 using System.Reflection;
 using System.Runtime.Loader;
-using EstellaModLoader.API;
 
 namespace EstellaModLoader;
 
@@ -335,8 +334,8 @@ internal class ModLoadContext : AssemblyLoadContext
 
     protected override Assembly? Load(AssemblyName assemblyName)
     {
-        // Always use shared assemblies for the API and Godot
-        if (assemblyName.Name == "EstellaModLoader.API" ||
+        // Always use shared assemblies for the ModLoader and Godot
+        if (assemblyName.Name == "EstellaModLoader" ||
             assemblyName.Name == "GodotSharp" ||
             assemblyName.Name == "GodotSharpEditor" ||
             assemblyName.Name?.StartsWith("System.") == true ||

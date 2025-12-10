@@ -8,10 +8,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\EstellaModLoader.API\EstellaModLoader.API.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
     <Reference Include="GodotSharp">
       <HintPath>C:\Program Files (x86)\Steam\steamapps\common\Estella Demo\data_ESTELLA_windows_x86_64\GodotSharp.dll</HintPath>
       <Private>false</Private>

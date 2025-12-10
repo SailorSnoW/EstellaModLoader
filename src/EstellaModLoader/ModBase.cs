@@ -1,4 +1,4 @@
-namespace EstellaModLoader.API;
+namespace EstellaModLoader;
 
 /// <summary>
 /// Base class for mods. Provides default empty implementations for all hooks.
