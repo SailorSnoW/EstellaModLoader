@@ -8,11 +8,11 @@ public static class Core
     public const string Version = "0.2.0";
 
     private static readonly List<IMod> _mods = [];
-    private static string _modsPath = null!;
+    private static string? _modsPath;
     private static bool _initialized;
 
     public static IReadOnlyList<IMod> LoadedMods => _mods.AsReadOnly();
-    public static string ModsPath => _modsPath;
+    public static string ModsPath => _modsPath ?? throw new InvalidOperationException("Core.Init() must be called first");
 
     public static void Init()
     {
@@ -94,6 +94,8 @@ public static class Core
 
     private static void LoadAllMods()
     {
+        if (_modsPath is null) return;
+
         if (!Directory.Exists(_modsPath))
         {
             Logger.Info("ModLoader", $"Creating mods directory: {_modsPath}");

@@ -113,8 +113,9 @@ internal static class Program
                 i.OpCode == OpCodes.Ldstr &&
                 i.Operand?.ToString() == "Init");
         }
-        catch
+        catch (Exception)
         {
+            // Failed to read assembly - assume not patched
             return false;
         }
     }
@@ -515,9 +516,9 @@ internal static class Program
                 return steamPath;
             }
         }
-        catch
+        catch (Exception)
         {
-            // Registry access failed
+            // Registry access failed - will fallback to common paths
         }
 
         return null;
@@ -562,9 +563,9 @@ internal static class Program
                 }
             }
         }
-        catch
+        catch (IOException)
         {
-            // Failed to parse VDF file
+            // Failed to parse VDF file - return whatever paths we found so far
         }
 
         return paths;

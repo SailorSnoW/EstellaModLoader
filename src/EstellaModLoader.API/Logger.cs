@@ -49,14 +49,20 @@ public static class Logger
                     File.Delete(oldLogPath);
                 File.Move(logPath, oldLogPath);
             }
-            catch { }
+            catch (IOException)
+            {
+                // Log rotation failed - old log file may be locked, continue without rotation
+            }
         }
 
         try
         {
             _writer = new StreamWriter(logPath, append: false) { AutoFlush = true };
         }
-        catch { }
+        catch (IOException)
+        {
+            // Failed to create log file - logging will only output to Godot console
+        }
 
         Info("Logger", $"EstellaModLoader initialized - Log level: {MinLevel}");
     }
@@ -86,7 +92,10 @@ public static class Logger
             {
                 _writer?.WriteLine(line);
             }
-            catch { }
+            catch (ObjectDisposedException)
+            {
+                // Writer was disposed, ignore
+            }
         }
 
         // Output to Godot console
@@ -94,7 +103,10 @@ public static class Logger
         {
             _gdPrint?.Invoke(line);
         }
-        catch { }
+        catch (Exception)
+        {
+            // Godot print failed - game may be shutting down
+        }
     }
 
     /// <summary>
@@ -155,7 +167,10 @@ public static class Logger
             File.WriteAllText(crashPath, content);
             Error("Logger", $"Crash dump saved to: {crashPath}");
         }
-        catch { }
+        catch (IOException)
+        {
+            // Failed to write crash dump - cannot recover
+        }
     }
 
     /// <summary>
